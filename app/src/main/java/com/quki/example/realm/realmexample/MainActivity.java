@@ -8,24 +8,30 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import io.realm.Realm;
+import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 
 public class MainActivity extends AppCompatActivity {
 
-    int count = 1;
-
+    private int count = 1;
+    private Realm realm;
+    private TextView status;
+    private RealmChangeListener mListener;
+    private RealmResults<Data> realmResultsAsync;
+    private Button insert,init,change;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // 이 스레드에서 Realm 인스턴스 얻기
-        final Realm realm = Realm.getInstance(getApplicationContext());
-        final RealmResults<Data> mDataResult = realm.where(Data.class).findAll(); //자동갱신
-        final Button insert = (Button) findViewById(R.id.insert);
-        final Button find = (Button) findViewById(R.id.find);
-        final Button init = (Button) findViewById(R.id.init);
-        final Button change = (Button) findViewById(R.id.change);
-        final TextView status = (TextView) findViewById(R.id.status);
+        // get Realm instance at this tread
+        realm = Realm.getInstance(getApplicationContext());
+        //final RealmResults<Data> mDataResult = realm.where(Data.class).findAll();
+        realmResultsAsync  = realm.where(Data.class).findAllAsync(); // find data asynchronous
+
+        insert = (Button) findViewById(R.id.insert);
+        init = (Button) findViewById(R.id.init);
+        change = (Button) findViewById(R.id.change);
+        status = (TextView) findViewById(R.id.status);
 
         insert.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -38,32 +44,32 @@ public class MainActivity extends AppCompatActivity {
                 realm.commitTransaction();
                 count++;
 
-                Toast.makeText(getApplicationContext(),mDataResult.size()+"",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), realmResultsAsync.size() + "", Toast.LENGTH_SHORT).show();
             }
         });
-        change.setOnClickListener(new View.OnClickListener(){
+        change.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 realm.executeTransaction(new Realm.Transaction() {
                     @Override
                     public void execute(Realm bgRealm) {
                         Data mChangedData = bgRealm.where(Data.class).findFirst();
-                        mChangedData.setName("바꼈어용");
+                        mChangedData.setName("data changed");
                     }
                 }, new Realm.Transaction.Callback() {
                     @Override
                     public void onSuccess() {
 
                         status.setText("=====================\n");
-                        for (int i = 0; i < mDataResult.size(); i++) {
-                            status.append(mDataResult.get(i).getName());
+                        for (int i = 0; i < realmResultsAsync.size(); i++) {
+                            status.append(realmResultsAsync.get(i).getName());
                             status.append("\n");
                         }
                     }
 
                     @Override
                     public void onError(Exception e) {
-                        Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -84,28 +90,36 @@ public class MainActivity extends AppCompatActivity {
                 d.removeFromRealm();*/
 
                 // Delete all matches
-                mDataResult.clear();
+                realmResultsAsync.clear();
 
                 realm.commitTransaction();
-                Toast.makeText(getApplicationContext(),mDataResult.size()+"",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), realmResultsAsync.size() + "", Toast.LENGTH_SHORT).show();
             }
         });
-        find.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // register callback
+        mListener = new RealmChangeListener() {
+            @Override
+            public void onChange() {
                 status.setText("=====================\n");
-                for (int i = 0; i < mDataResult.size(); i++) {
-                    status.append(mDataResult.get(i).getName());
+                for (int i = 0; i < realmResultsAsync.size(); i++) {
+                    status.append(realmResultsAsync.get(i).getName());
                     status.append("\n");
                 }
-
-
             }
-        });
+        };
+        realmResultsAsync.addChangeListener(mListener);
+    }
 
-
-
-
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // to protect memory leak removing listener
+        realm.removeChangeListener(mListener);
     }
 }
