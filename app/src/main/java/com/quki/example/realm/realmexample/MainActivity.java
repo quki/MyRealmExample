@@ -1,5 +1,6 @@
 package com.quki.example.realm.realmexample;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -18,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView status;
     private RealmChangeListener mListener;
     private RealmResults<Data> realmResultsAsync;
-    private Button insert,init,change;
+    private Button insert,init,change,startService,stopService;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
         init = (Button) findViewById(R.id.init);
         change = (Button) findViewById(R.id.change);
         status = (TextView) findViewById(R.id.status);
+        startService = (Button) findViewById(R.id.startService);
+        stopService = (Button) findViewById(R.id.stopService);
 
         insert.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -97,6 +100,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        startService.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                startService();
+            }
+        });
+        stopService.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                stopService();
+            }
+        });
+
     }
 
     @Override
@@ -121,5 +137,14 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
         // to protect memory leak removing listener
         realm.removeChangeListener(mListener);
+    }
+
+    protected void startService(){
+        Intent intentService = new Intent(this, MainService.class);
+        startService(intentService);
+    }
+    protected void stopService(){
+        Intent intentService = new Intent(this, MainService.class);
+        stopService(intentService);
     }
 }

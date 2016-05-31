@@ -29,12 +29,23 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/change"
             android:text="init" />
-
+        <Button
+            android:id="@+id/startService"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/init"
+            android:text="startService" />
+        <Button
+            android:id="@+id/stopService"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/startService"
+            android:text="stopService" />
         <TextView
             android:id="@+id/status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/init"
+            android:layout_below="@+id/stopService"
             android:text="0" />
     </RelativeLayout>
 </ScrollView>
